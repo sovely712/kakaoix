@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="point">
+
+<!--등록 -->
+<insert id="create" parameterType="PointVO">
+    INSERT INTO point(pointno, u_point, s_point, pstatus, pdate, memberno, orderno)
+    VALUES((SELECT NVL(MAX(pointno), 0)+1 as pointno FROM point),
+      #{u_point}, #{s_point}, #{pstatus}, sysdate,  #{memberno}, #{orderno})
+</insert>
+
+<!--목록 -->
+<select id="list" resultType="PointVO" parameterType="int">
+    SELECT pointno, u_point, s_point, pstatus, pdate, memberno, orderno
+    FROM point p
+    WHERE memberno=#{memberno}
+    ORDER BY pointno DESC
+</select>
+
+<!--조회 -->
+<select id="read" resultType="PointVO" parameterType="int">
+    SELECT pointno, u_point, s_point, pstatus, pdate, memberno, orderno
+    FROM point
+    WHERE orderno=#{orderno}
+</select>
+
+</mapper>

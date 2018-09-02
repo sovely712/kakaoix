@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+            
+<mapper namespace="contents">
+
+  <resultMap type="ContentsVO" id="ContentsVOResultMap">
+  <result property="contentsno" column="contentsno" javaType="java.lang.Integer" jdbcType="INTEGER" />
+  <result property="categoryno" column="categoryno" javaType="java.lang.Integer" jdbcType="INTEGER" /> 
+  <result property="title" column="title" javaType="java.lang.String" jdbcType="VARCHAR" />
+  <result property="content" column="content" javaType="java.lang.String" jdbcType="VARCHAR" />
+  <result property="cnt" column="cnt" javaType="java.lang.Integer" jdbcType="INTEGER" /> 
+  <result property="cdate" column="cdate" javaType="java.lang.String" jdbcType="VARCHAR" />
+  <result property="files" column="files" javaType="java.lang.String" jdbcType="VARCHAR" />
+  <result property="thumbs" column="thumbs" javaType="java.lang.String" jdbcType="VARCHAR" />
+  <result property="sizes" column="sizes" javaType="java.lang.Integer" jdbcType="INTEGER" /> 
+  <result property="price" column="price" javaType="java.lang.Integer" jdbcType="INTEGER" /> 
+  <result property="num" column="num" javaType="java.lang.Integer" jdbcType="INTEGER" /> 
+  </resultMap>
+
+ <!--등록 -->  
+<insert id="create" parameterType="ContentsVO">
+INSERT INTO contents(contentsno,
+                     categoryno, title, content, cnt, cdate, thumbs, files, sizes, price, num)  
+VALUES((SELECT NVL(MAX(contentsno), 0) + 1 as contentsno FROM contents),
+            #{categoryno}, #{title}, #{content:VARCHAR}, #{cnt}, sysdate, #{thumbs}, #{files}, #{sizes}, #{price}, #{num})
+</insert>  
+
+ <!--검색된 레코드 개수 -->
+  <select id="search_count" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as search_cnt
+    FROM contents
+     <choose>
+         <when test="word != ''"> <!-- 검색하는 경우 -->
+             WHERE title LIKE '%' || #{word} || '%'
+         </when>
+     </choose>
+  </select>
+  
+  <!-- 검색된 레코드 목록 + 페이징 -->
+  <select id="list_search" resultType="ContentsVO" parameterType="HashMap">
+    SELECT    contentsno, categoryno, title, content, cnt, cdate, thumbs, files, sizes, price, num, r
+    FROM (
+              SELECT  contentsno, categoryno, title, content, cnt, cdate, thumbs, files, sizes, price, num, rownum as r
+              FROM (
+                        SELECT  contentsno, categoryno, title, content, cnt, cdate, thumbs, files, sizes, price, num
+                        FROM contents
+                        <choose>
+                          <when test="word != ''"> <!-- 검색하는 경우 -->
+                               WHERE title LIKE '%' || #{word} || '%'
+                          </when>
+                        </choose>
+                       ORDER BY cdate DESC
+              )            
+    )
+    WHERE <![CDATA[ r >= #{startNum} AND r <= #{endNum} ]]> 
+  </select>
+  
+  <!--상세조회 -->
+  <select id="read" resultMap="ContentsVOResultMap" parameterType="int">
+    SELECT contentsno, categoryno, title, content, cnt, cdate, thumbs, files, sizes, price, num
+    FROM contents
+    WHERE contentsno=#{contentsno} 
+  </select>
+  
+  <!--조회수 증가 -->
+  <update id="increaseCnt" parameterType="int">
+    UPDATE contents
+    SET cnt = cnt + 1
+    WHERE contentsno = #{contentsno}
+  </update>
+  
+  <!--재고량 감소 -->
+  <update id="decreaseNum" parameterType="int">
+    UPDATE contents 
+    SET num = num - 1 
+    WHERE contentsno=#{contentsno}
+  </update>
+ 
+
+</mapper>

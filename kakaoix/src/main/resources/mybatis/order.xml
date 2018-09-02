@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="order">
+
+<!--주문 -->
+<insert id="create" parameterType="OrderVO">
+INSERT INTO kakaoix_order(orderno, ordernum, contentsno, basketno, memberno, b_num, n_price, n_point, b_point, tot_price, dir_price, totdir_price, dc_price, b_price, odate, dname, dzipcode, daddress, dtel, dcontent)
+VALUES((SELECT NVL(MAX(orderno), 0)+1 as orderno FROM kakaoix_order), #{ordernum}, #{contentsno}, #{basketno}, #{memberno}, #{b_num}, #{n_price}, #{n_point}, #{b_point}, #{tot_price}, #{dir_price}, #{totdir_price}, #{dc_price}, #{b_price}, sysdate, #{dname}, #{dzipcode}, #{daddress}, #{dtel}, #{dcontent}) 
+</insert>
+
+<!--주문번호-->
+<select id="ordernum" resultType="int">
+SELECT NVL(MAX(ordernum),0)+1 as ordernum FROM kakaoix_order
+</select>
+
+<!--한건의 레코드 조회 -->
+<select id="read" resultType="OrderVO" parameterType="int">
+    SELECT o.orderno, o.ordernum, o.contentsno, o.memberno, c.files, c.thumbs, c.title, c.price, o.b_num, o.n_price, o.n_point, o.b_point, o.tot_price, o.dir_price, o.totdir_price, o.dc_price, o.b_price, o.odate, o.status, o.dname, o.dzipcode, o.daddress, o.dtel, o.dcontent 
+    FROM kakaoix_order o, contents c
+    WHERE o.contentsno = c.contentsno and o.orderno=#{orderno}
+</select>
+
+<!--여러건의 레코드 조회 -->
+<select id="List_read" resultType="Order_JoinVO" parameterType="int">
+    SELECT o.orderno, o.ordernum, o.contentsno, o.memberno, c.files, c.thumbs, c.title, c.price, o.b_num, o.n_price, o.n_point, o.b_point, o.tot_price, o.dir_price, o.totdir_price, o.dc_price, o.b_price, o.odate, o.status, o.dname, o.dzipcode, o.daddress, o.dtel, o.dcontent 
+    FROM kakaoix_order o, contents c
+    WHERE o.contentsno = c.contentsno and o.ordernum=#{ordernum}
+</select>
+
+<!--검색된 레코드 개수 -->
+<select id="search_count" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as search_count
+    FROM kakaoix_order
+    <choose>
+      <when test="status == null or status == ''"> <!-- 검색하지 않는 경우 -->
+        WHERE memberno=#{memberno}
+      </when>
+      <otherwise>
+        WHERE memberno=#{memberno} AND status LIKE '%' || #{status} || '%'  
+      </otherwise>
+    </choose>
+ </select>
+ 
+<!--목록(검색+페이징) --> 
+<select id="list_order_search_paging" resultType="Order_JoinVO" parameterType="HashMap">
+     SELECT *
+     FROM(
+            SELECT rownum as r, CO.*
+            FROM(
+                  SELECT o.orderno, o.ordernum, o.contentsno, o.memberno, c.files, c.thumbs, c.title, c.price, o.b_num, o.n_price, o.n_point, o.b_point, o.tot_price, o.dir_price, o.totdir_price, o.dc_price, o.b_price, o.odate, o.status, o.dname, o.dzipcode, o.daddress, o.dtel, o.dcontent 
+                  FROM kakaoix_order o, contents c
+                  <choose>
+                  <when test="status == null or status == ''"> <!-- 검색하지 않는 경우 -->
+                  WHERE o.memberno=#{memberno} AND o.contentsno = c.contentsno
+                  </when>
+                  <otherwise>
+                  WHERE o.memberno=#{memberno} AND o.contentsno = c.contentsno AND o.status LIKE '%' || #{status} || '%'  
+                  </otherwise>
+                  </choose>
+                  ORDER BY o.ordernum DESC) CO            
+    )
+    WHERE <![CDATA[ r >= #{startNum} AND r <= #{endNum} ]]> 
+</select>
+
+<update id="updateStatus" parameterType="OrderVO">
+    UPDATE kakaoix_order
+    SET status=#{status}
+    WHERE ordernum = #{ordernum}
+</update>
+
+<update id="updatePrice" parameterType="OrderVO">
+    UPDATE kakaoix_order
+    SET dir_price=#{dir_price}, totdir_price=#{totdir_price}, b_price=#{b_price}
+    WHERE ordernum = #{ordernum}
+</update>
+
+
+</mapper>

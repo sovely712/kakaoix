@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="category">
+   
+  <!--등록 -->
+  <insert id="create" parameterType="CategoryVO">
+    INSERT INTO category(categoryno, title, cdate)
+    VALUES((SELECT NVL(MAX(categoryno), 0)+1 as categoryno FROM category), #{title}, sysdate)
+  </insert>
+  
+  <!--목록 -->
+  <select id="list" resultType="CategoryVO">
+    SELECT categoryno, title, cdate
+    FROM category 
+    ORDER BY categoryno ASC
+  </select>
+  
+  <!--값읽기 -->
+  <select id="read" resultType="CategoryVO" parameterType="int">
+    SELECT categoryno, title, cdate
+    FROM category 
+    WHERE categoryno=#{categoryno}
+  </select>
+
+  <!--수정처리 -->
+  <update id="update" parameterType="CategoryVO">
+    UPDATE category
+    SET title=#{title}
+    WHERE categoryno=#{categoryno}
+  </update>
+ 
+</mapper>

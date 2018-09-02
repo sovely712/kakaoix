@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="basket">
+
+  <!--목록 -->
+  <select id="list" parameterType="int" resultType="Contents_BasketVO">
+      SELECT ba.basketno, co.title, co.price,  co.files, co.sizes, co.thumbs, ba.b_num, ba.visible, ba.contentsno, ba.memberno
+      FROM contents co, basket ba 
+      WHERE co.contentsno = ba.contentsno AND
+      ba.memberno = #{memberno} AND
+      ba.visible = 'Y' 
+      ORDER BY ba.basketno DESC
+  </select>
+  
+  <!--상세조회 -->
+  <select id="read" resultType="Contents_BasketVO" parameterType="int">
+    SELECT co.*, ba.*
+    FROM contents co, basket ba 
+    WHERE co.contentsno = ba.contentsno AND
+    ba.basketno=#{basketno}
+  </select>
+  
+  <!--등록 -->
+  <insert id="create" parameterType="BasketVO">
+    INSERT INTO basket(basketno, b_num, visible, memberno, contentsno)
+    VALUES((SELECT NVL(MAX(basketno), 0)+1 as basketno FROM basket),
+      #{b_num}, #{visible}, #{memberno} , #{contentsno})
+  </insert>
+
+  <!--삭제 -->
+  <delete id="delete" parameterType="int">
+    DELETE FROM basket
+    WHERE basketno = #{basketno}
+  </delete>
+  
+  <!--상품수 -->
+  <select id="count" resultType="int" parameterType="int">
+    SELECT COUNT(*) as cnt
+    FROM basket
+    WHERE memberno=#{memberno} 
+    AND visible='Y' 
+    
+  </select>
+  
+  <!--상태값 변경 -->
+  <update id="visible" parameterType="Contents_BasketVO">
+    UPDATE basket
+    SET visible=#{visible}
+    WHERE basketno = #{basketno}
+  </update>
+  
+</mapper>
